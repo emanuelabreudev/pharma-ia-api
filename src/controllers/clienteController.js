@@ -1,20 +1,36 @@
-const { Op } = require("sequelize");
+const { Op, fn, col, where } = require("sequelize");
 const Cliente = require("../models/Cliente");
 
 class ClienteController {
   async index(req, res) {
     try {
-      const { cidade, nome } = req.query;
+      const { cidade, nome, email, status } = req.query;
       const whereClause = {};
 
-      if (cidade) {
-        whereClause.cidade = cidade;
+      if (nome) {
+        whereClause.nome = { [Op.iLike]: `%${nome}%` };
       }
 
-      if (nome) {
-        whereClause.nome = {
-          [Op.iLike]: `%${nome}%`,
-        };
+      if (cidade) {
+        whereClause.cidade = { [Op.iLike]: `%${cidade}%` };
+      }
+
+      if (email) {
+        const emailTrim = email.trim();
+        if (emailTrim.includes("@")) {
+          whereClause.email = where(
+            fn("lower", fn("trim", col("email"))),
+            Op.eq,
+            emailTrim.toLowerCase()
+          );
+        } else {
+          whereClause.email = { [Op.iLike]: `%${email}%` };
+        }
+      }
+
+      if (status !== undefined) {
+        const statusBool = status === "true" || status === true;
+        whereClause.status = statusBool;
       }
 
       const clientes = await Cliente.findAll({
@@ -67,6 +83,12 @@ class ClienteController {
   async store(req, res) {
     try {
       const { nome, email, telefone, cidade } = req.body;
+      const rawStatus = req.body.status;
+      const normalizedEmail = email.trim().toLowerCase();
+      const status =
+        rawStatus === undefined
+          ? undefined
+          : rawStatus === true || rawStatus === "true";
 
       if (!nome || !email || !telefone || !cidade) {
         return res.status(400).json({
@@ -76,7 +98,14 @@ class ClienteController {
         });
       }
 
-      const emailExistente = await Cliente.findOne({ where: { email } });
+      const emailExistente = await Cliente.findOne({
+        where: where(
+          fn("lower", fn("trim", col("email"))),
+          Op.eq,
+          normalizedEmail
+        ),
+      });
+
       if (emailExistente) {
         return res.status(409).json({
           success: false,
@@ -89,6 +118,7 @@ class ClienteController {
         email,
         telefone,
         cidade,
+        ...(status !== undefined ? { status } : {}),
       });
 
       return res.status(201).json({
@@ -122,6 +152,11 @@ class ClienteController {
     try {
       const { id } = req.params;
       const { nome, email, telefone, cidade } = req.body;
+      const rawStatus = req.body.status;
+      const status =
+        rawStatus === undefined
+          ? undefined
+          : rawStatus === true || rawStatus === "true";
 
       const cliente = await Cliente.findByPk(id);
 
@@ -132,8 +167,19 @@ class ClienteController {
         });
       }
 
-      if (email && email !== cliente.email) {
-        const emailExistente = await Cliente.findOne({ where: { email } });
+      if (
+        email &&
+        email.trim().toLowerCase() !==
+          (cliente.email ?? "").trim().toLowerCase()
+      ) {
+        const normalizedEmail = email.trim().toLowerCase();
+        const emailExistente = await Cliente.findOne({
+          where: where(
+            fn("lower", fn("trim", col("email"))),
+            Op.eq,
+            normalizedEmail
+          ),
+        });
         if (emailExistente) {
           return res.status(409).json({
             success: false,
@@ -147,6 +193,7 @@ class ClienteController {
         email: email || cliente.email,
         telefone: telefone || cliente.telefone,
         cidade: cidade || cliente.cidade,
+        ...(status !== undefined ? { status } : {}),
       });
 
       return res.status(200).json({

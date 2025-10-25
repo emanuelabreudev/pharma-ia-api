@@ -59,6 +59,21 @@ const Cliente = sequelize.define(
         },
       },
     },
+    status: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+      validate: {
+        notNull: {
+          msg: "Status é obrigatório",
+        },
+        isBoolean(value) {
+          if (typeof value !== "boolean") {
+            throw new Error("Status deve ser booleano");
+          }
+        },
+      },
+    },
   },
   {
     tableName: "clientes",
