@@ -4,12 +4,12 @@ const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "FarmaUP API - Documentação",
+      title: "PharmaIA API - Documentação",
       version: "1.0.0",
-      description: "API REST para gerenciamento de clientes da FarmaUP",
+      description: "API REST para gerenciamento de clientes da PharmaIA",
       contact: {
-        name: "Suporte FarmaUP",
-        email: "suporte@farmaup.com",
+        name: "Suporte PharmaIA",
+        email: "suporte@pharmaia.com",
       },
       license: {
         name: "ISC",

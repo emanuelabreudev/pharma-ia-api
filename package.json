@@ -1,5 +1,5 @@
 {
-  "name": "farmaup-api",
+  "name": "pharma-ia-api",
   "version": "1.0.0",
   "description": "API REST para gerenciamento de clientes - Teste Técnico FarmaUP",
   "main": "src/server.js",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/emanuel-abreu/farmaup-api.git"
+    "url": "git+https://github.com/emanuelabreudev/pharma-ia-api.git"
   },
   "keywords": [
     "api",
@@ -23,9 +23,9 @@
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/emanuel-abreu/farmaup-api/issues"
+    "url": "https://github.com/emanuelabreudev/pharma-ia-api/issues"
   },
-  "homepage": "https://github.com/emanuel-abreu/farmaup-api#readme",
+  "homepage": "https://github.com/emanuelabreudev/pharma-ia-api#readme",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
