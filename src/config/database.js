@@ -1,32 +1,57 @@
 const { Sequelize } = require("sequelize");
-require("dotenv").config();
+const logger = require("../utils/logger");
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    dialect: "postgres",
-    logging: false,
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000,
-    },
+class Database {
+  constructor() {
+    this.sequelize = new Sequelize(
+      process.env.DB_NAME,
+      process.env.DB_USER,
+      process.env.DB_PASSWORD,
+      {
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        dialect: "postgres",
+        logging: process.env.NODE_ENV === "development" ? logger.debug : false,
+        pool: {
+          max: 5,
+          min: 0,
+          acquire: 30000,
+          idle: 10000,
+        },
+        define: {
+          timestamps: true,
+          underscored: true,
+        },
+      }
+    );
   }
-);
 
-const testConnection = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log("Conexão com o banco de dados estabelecida com sucesso!");
-  } catch (error) {
-    console.error("Erro ao conectar com o banco de dados:", error.message);
-    process.exit(1);
+  async testConnection() {
+    try {
+      await this.sequelize.authenticate();
+      logger.info("✅ Conexão com banco de dados estabelecida");
+      return true;
+    } catch (error) {
+      logger.error("❌ Erro ao conectar com banco de dados:", error.message);
+      throw error;
+    }
   }
-};
 
-module.exports = { sequelize, testConnection };
+  async syncModels() {
+    try {
+      await this.sequelize.sync({
+        alter: process.env.NODE_ENV === "development",
+      });
+      logger.info("✅ Modelos sincronizados com sucesso");
+    } catch (error) {
+      logger.error("❌ Erro ao sincronizar modelos:", error.message);
+      throw error;
+    }
+  }
+
+  getSequelize() {
+    return this.sequelize;
+  }
+}
+
+module.exports = new Database();

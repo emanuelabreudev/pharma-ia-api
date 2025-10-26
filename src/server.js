@@ -1,9 +1,13 @@
 const express = require("express");
 const cors = require("cors");
+const swaggerUi = require("swagger-ui-express");
 require("dotenv").config();
 
-const { sequelize, testConnection } = require("./config/database");
+const database = require("./config/database");
+const swaggerSpec = require("./config/swagger");
 const clienteRoutes = require("./routes/clienteRoutes");
+const errorHandler = require("./middlewares/errorHandler");
+const logger = require("./utils/logger");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,6 +15,18 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+if (process.env.SWAGGER_ENABLED === "true") {
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
+
+app.get("/health", (req, res) => {
+  res.json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
 
 app.use("/api", clienteRoutes);
 
@@ -21,20 +37,21 @@ app.use((req, res) => {
   });
 });
 
+app.use(errorHandler);
+
 const startServer = async () => {
   try {
-    await testConnection();
-
-    await sequelize.sync({ alter: true });
-    console.log("Modelos sincronizados com o banco de dados");
+    await database.testConnection();
+    await database.syncModels();
 
     app.listen(PORT, () => {
-      console.log(`Servidor rodando na porta ${PORT}`);
-      console.log(`Acesse: http://localhost:${PORT}`);
-      console.log(`Documentação: http://localhost:${PORT}/`);
+      logger.info(`🚀 Servidor rodando na porta ${PORT}`);
+      logger.info(`📍 API: http://localhost:${PORT}/api`);
+      logger.info(`📚 Swagger: http://localhost:${PORT}/api-docs`);
+      logger.info(`❤️  Health: http://localhost:${PORT}/health`);
     });
   } catch (error) {
-    console.error("Erro ao iniciar o servidor:", error);
+    logger.error("❌ Erro ao iniciar servidor:", error);
     process.exit(1);
   }
 };
